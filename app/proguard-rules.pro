@@ -1,0 +1,2 @@
+-dontwarn org.jetbrains.annotations.NonNls
+-dontwarn org.slf4j.*

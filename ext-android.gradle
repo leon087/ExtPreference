@@ -1,25 +1,40 @@
-def computeVersionName() {
-    return project.versionName + "." + buildTime()
-}
-
-def buildTime() {
-    def date = new Date()
-    def formattedDate = date.format('MMddHH')
-    return formattedDate
-}
-
-def isWindows() {
-    String osName = System.getProperty("os.name").toLowerCase();
-    if (osName.indexOf("windows") >= 0) {
-        return true;
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url CM_RELEASE_REPOSITORY_URL
+            credentials {
+                username CM_NEXUS_USERNAME
+                password CM_NEXUS_PASSWORD
+            }
+        }
+        maven { url uri(new File(rootDir, 'local_repo')) }
+        mavenLocal()
     }
-    return false;
+//    ext {
+//        cmGradleVersion = "local.local"
+//    }
+
+    dependencies {
+        classpath "ggg.android:gradle-plugin:$cmGradleVersion"
+    }
+}
+
+if (plugins.hasPlugin('com.android.library')) {
+    if (project.hasProperty("version_prefix")) {
+        version = cm.android.gradle.util.Util.version(project.version_prefix, project.version_code)
+        android {
+            defaultConfig {
+                archivesBaseName += ("-" + project.version_prefix + "." + project.version_code + "." + cm.android.gradle.util.Util.buildTime())
+            }
+        }
+    }
 }
 
 if (plugins.hasPlugin('com.android.application') || plugins.hasPlugin('com.android.library')) {
     android {
-        compileSdkVersion Integer.parseInt(project.compileSdkVersion)
-        buildToolsVersion project.buildToolsVersion
+        compileSdkVersion rootProject.ext.compileSdkVersion
+        buildToolsVersion rootProject.ext.buildToolsVersion
 
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_7
@@ -27,53 +42,57 @@ if (plugins.hasPlugin('com.android.application') || plugins.hasPlugin('com.andro
         }
 
         defaultConfig {
-            minSdkVersion Integer.parseInt(project.minSdkVersion)
-            targetSdkVersion Integer.parseInt(project.targetSdkVersion)
-            versionCode Integer.parseInt(project.versionCode)
-            versionName computeVersionName()
+            minSdkVersion rootProject.ext.minSdkVersion
+            targetSdkVersion rootProject.ext.targetSdkVersion
         }
     }
 
     android {
-        packagingOptions {
-//        pickFirst 'META-INF/foo.txt'
 
-            exclude 'META-INF/DEPENDENCIES.txt'
-            exclude 'META-INF/LICENSE.txt'
-            exclude 'META-INF/NOTICE.txt'
-            exclude 'LICENSE.txt'
-            exclude 'META-INF/LICENSE'
-            exclude 'META-INF/license.txt'
-            exclude 'META-INF/NOTICE'
-            exclude 'META-INF/notice.txt'
-            exclude 'META-INF/ASL2.0'
+        testOptions {
+            unitTests.returnDefaultValues = true
         }
 
-        lintOptions {
-            abortOnError false
-            quiet false
-            showAll true
+        aaptOptions {
+//            noCompress 'foo', 'bar'
+            ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"
         }
 
-        dexOptions { preDexLibraries = false }
-    }
-}
+        packagingOptions.excludes = [
+                '**/LICENSE.txt',
+                '**/license.txt',
+                '**/DEPENDENCIES.txt',
+                '**/NOTICE.txt',
+                '**/NOTICE',
+                '**/notice.txt',
+                '**/ASL2.0',
+                '**/RELEASE_NOTES.txt',
 
-if (plugins.hasPlugin('com.android.library')) {
-    android.libraryVariants.all { variant ->
-        def name = variant.buildType.name
-        def task = project.tasks.create "jar${name.capitalize()}", Jar
-        task.dependsOn variant.javaCompile
-        task.from variant.javaCompile.destinationDir
-        artifacts.add('archives', task);
-    }
+                'LICENSE',
+                'LICENSE.txt',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                '.readme'
+        ]
 
-    task androidSourcesJar(type: Jar) {
-        classifier = 'sources'
-        from android.sourceSets.main.java.srcDirs
-    }
+//        lintOptions {
+//            abortOnError false
+//            quiet false
+//            showAll true
+//            xmlReport true
+//            htmlReport true
+//            lintConfig file("${project.rootDir}/config/lint/lint.xml")
+//
+//            xmlOutput file("lint/lint-report.xml")
+//            htmlOutput file("lint/lint-report.html")
+//        }
 
-    artifacts {
-        archives androidSourcesJar
+        dexOptions {
+            preDexLibraries = false
+            incremental true
+            javaMaxHeapSize "2g"
+        }
     }
 }

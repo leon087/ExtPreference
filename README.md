@@ -1,4 +1,11 @@
-secure-preference
+extpreference
 =================
 
-加密版本的Android SharedPreference，可以配置自定义的加密算法。
+ext
+---
+跨进程读写SharedPreference
+
+
+security
+---
+加密版本的Android SharedPreference

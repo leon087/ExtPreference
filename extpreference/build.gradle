@@ -1,0 +1,19 @@
+tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
+
+apply plugin: 'com.android.library'
+apply from: "$rootDir/ext-android.gradle"
+
+android {
+    defaultConfig {
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    compile "org.slf4j:slf4j-api:1.7.25"
+}
+
+//jitpack
+//apply plugin: 'com.github.dcendents.android-maven'
+//group = 'com.github.xxx'
